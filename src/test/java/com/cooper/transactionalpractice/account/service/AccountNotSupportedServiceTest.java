@@ -4,24 +4,21 @@ import com.cooper.transactionalpractice.account.domain.Account;
 import com.cooper.transactionalpractice.account.domain.AccountHistory;
 import com.cooper.transactionalpractice.account.repository.AccountHistoryRepository;
 import com.cooper.transactionalpractice.account.repository.AccountRepository;
-import com.cooper.transactionalpractice.account.service.supports.AccountSupportsService;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import com.cooper.transactionalpractice.account.service.not_supported.AccountNotSupportedService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.UnexpectedRollbackException;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class AccountSupportsServiceTest {
+class AccountNotSupportedServiceTest {
 
     @Autowired
-    private AccountSupportsService accountSupportsService;
+    private AccountNotSupportedService accountNotSupportedService;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -29,20 +26,19 @@ class AccountSupportsServiceTest {
     @Autowired
     private AccountHistoryRepository accountHistoryRepository;
 
-    @BeforeEach
-    void init() {
-        accountRepository.deleteAll();
-        accountHistoryRepository.deleteAll();
-    }
-
-    @DisplayName("supports 일 경우, 부모 트랜잭션이 존재하면 부모 트랜잭션 내에서 동작한다")
+    @DisplayName("not_supported 일 경우, 부모 트랜잭션이 존재하면 일시정지한다")
     @Test
-    void saveAccountWhenHistorySupports() {
+    void saveAccountWenHistoryNotSupported() {
         accountRepository.save(Account.create("123", "123", 123));
         accountRepository.save(Account.create("234", "234", 234));
 
         // if transaction commit,  Account 1 + AccountHistory 1
-        accountSupportsService.saveAccountWhenHistorySupports(Account.create("345", "345", 345));
+        /*
+        * 1. 부모 트랜잭션이 존재할 경우, 부모 트랜잭션을 멈춘다.
+        * 2. 자식 트랜잭션은 동작하고 커밋한다.
+        * 3. 정지했던 부모 트랜잭션을 회복하여 부모 트랙잭션을 진행한다. (자식이 완료되고 부모가 다시 트랜잭션이 동작하는걸로 보아 독립적으로 동작)
+        */
+        accountNotSupportedService.saveAccountWhenHistoryNotSupported(Account.create("345", "345", 345));
 
         List<Account> allAccounts = accountRepository.findAll();
         List<AccountHistory> allAccountHistories = accountHistoryRepository.findAll();
@@ -51,37 +47,34 @@ class AccountSupportsServiceTest {
         assertThat(allAccountHistories).hasSize(1);
     }
 
-    @DisplayName("supports 일 경우, 자식 트랜잭션에서 예외가 발생하면 부모 트랜잭션까지 롤백한다.")
+    @DisplayName("not_supported 일 경우, 기본적으로 트랜잭션이 없이 동작하기 때문에 예외가 발생해도 AccountHistroy 가 저장된다")
     @Test
-    void throwExceptionWhenSupports() {
+    void saveAccountWhenHistoryThrowException() {
         accountRepository.save(Account.create("123", "123", 123));
         accountRepository.save(Account.create("234", "234", 234));
 
-        //if transaction commit,  Account 1 + AccountHistory 1
-        Assertions.assertThatThrownBy(() -> accountSupportsService.saveAccountWhenHistoryThrowException(Account.create("345", "345", 345)))
-                .isInstanceOf(UnexpectedRollbackException.class);
+        accountNotSupportedService.saveAccountWhenHistoryThrowException(Account.create("345", "345", 345));
 
         List<Account> allAccounts = accountRepository.findAll();
         List<AccountHistory> allAccountHistories = accountHistoryRepository.findAll();
 
-        assertThat(allAccounts).hasSize(2);
-        assertThat(allAccountHistories).hasSize(0);
+        assertThat(allAccounts).hasSize(3);
+        assertThat(allAccountHistories).hasSize(1);
     }
 
-    @DisplayName("supports 일 경우, 부모 트랜잭션이 존재하지 않으면 트랜잭션없이 동작한다.")
+    @DisplayName("not_supported일 경우, 부모 메서드가 트랜잭션이 존재하지 않을 경우, 자식 메서드는 기본적으로 트랜잭션없이 동작한다")
     @Test
     void saveAccountWithOutTransaction() {
         accountRepository.save(Account.create("123", "123", 123));
         accountRepository.save(Account.create("234", "234", 234));
 
-        accountSupportsService.saveAccountWithOutTransaction(Account.create("345", "345", 345));
+        accountNotSupportedService.saveAccountWithOutTransaction(Account.create("345", "345", 345));
 
         List<Account> allAccounts = accountRepository.findAll();
         List<AccountHistory> allAccountHistories = accountHistoryRepository.findAll();
 
-        //자식 트랜잭션이 동작하지 않기 때문에 AccountHistory 가 저장된다.
         assertThat(allAccounts).hasSize(3);
         assertThat(allAccountHistories).hasSize(1);
-    }
 
+    }
 }

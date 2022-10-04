@@ -1,4 +1,4 @@
-package com.cooper.transactionalpractice.account.service.supports;
+package com.cooper.transactionalpractice.account.service.not_supported;
 
 import com.cooper.transactionalpractice.account.domain.Account;
 import com.cooper.transactionalpractice.account.dto.AccountHistoryCreateRequestDto;
@@ -11,14 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AccountSupportsService {
+public class AccountNotSupportedService {
 
-    private final AccountHistorySupportsService accountHistorySupportsService;
+    private final AccountHistoryNotSupportedService accountHistoryNotSupportedService;
 
     private final AccountRepository accountRepository;
 
     @Transactional
-    public void saveAccountWhenHistorySupports(Account account) {
+    public void saveAccountWhenHistoryNotSupported(Account account) {
         Account savedAccount = accountRepository.save(account);
 
         AccountHistoryCreateRequestDto accountHistoryCreateRequestDto = AccountHistoryCreateRequestDto.create(
@@ -26,7 +26,7 @@ public class AccountSupportsService {
                 savedAccount.getBalance()
         );
 
-        accountHistorySupportsService.save(accountHistoryCreateRequestDto);
+        accountHistoryNotSupportedService.save(accountHistoryCreateRequestDto);
     }
 
     @Transactional
@@ -39,7 +39,7 @@ public class AccountSupportsService {
         );
 
         try {
-            accountHistorySupportsService.throwExceptionWhenSupports(accountHistoryCreateRequestDto);
+            accountHistoryNotSupportedService.throwExceptionWhenNotSupported(accountHistoryCreateRequestDto);
         } catch (Exception exception) {
             log.debug("exception : {}", exception.getMessage());
         }
@@ -54,7 +54,7 @@ public class AccountSupportsService {
         );
 
         try {
-            accountHistorySupportsService.throwExceptionWhenSupports(accountHistoryCreateRequestDto);
+            accountHistoryNotSupportedService.throwExceptionWhenNotSupported(accountHistoryCreateRequestDto);
         } catch (Exception exception) {
             log.debug("exception : {}", exception.getMessage());
         }

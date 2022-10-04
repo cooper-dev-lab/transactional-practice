@@ -1,9 +1,10 @@
-package com.cooper.transactionalpractice.account.service.mandatory;
+package com.cooper.transactionalpractice.account.service;
 
 import com.cooper.transactionalpractice.account.domain.Account;
 import com.cooper.transactionalpractice.account.domain.AccountHistory;
 import com.cooper.transactionalpractice.account.repository.AccountHistoryRepository;
 import com.cooper.transactionalpractice.account.repository.AccountRepository;
+import com.cooper.transactionalpractice.account.service.mandatory.AccountMandatoryService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
